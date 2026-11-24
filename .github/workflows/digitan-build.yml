@@ -1,0 +1,55 @@
+
+name: DIGITAN_01 Build APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build DIGITAN_01
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Java 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Check ZIP
+        run: |
+          test -f DIGITAN_01.zip
+          echo "ZIP ditemukan!"
+
+      - name: Extract Project
+        run: |
+          unzip -o DIGITAN_01.zip -d .
+          test -f DIGITAN_01/settings.gradle
+          test -f DIGITAN_01/build.gradle
+          test -f DIGITAN_01/app/build.gradle
+          echo "Struktur proyek valid!"
+
+      - name: Setup Gradle 8.9
+        uses: gradle/gradle-build-action@v3
+        with:
+          gradle-version: '8.9'
+
+      - name: Build Debug APK
+        run: gradle -p DIGITAN_01 :app:assembleDebug --no-daemon
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: DIGITAN_01-debug
+          path: DIGITAN_01/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+          retention-days: 14
